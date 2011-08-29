@@ -47,7 +47,7 @@ module Resque
       names.map! { |name| "worker:#{name}" }
 
       reportedly_working = redis.mapped_mget(*names).reject do |key, value|
-        value.nil?
+        value.nil? || value.empty?
       end
       reportedly_working.keys.map do |key|
         find key.sub("worker:", '')
@@ -127,13 +127,13 @@ module Resque
       loop do
         break if shutdown?
 
-        if not @paused and job = reserve
+        if not paused? and job = reserve
           log "got: #{job.inspect}"
           run_hook :before_fork, job
           working_on job
 
           if @child = fork
-            rand # Reseeding
+            srand # Reseeding
             procline "Forked #{@child} at #{Time.now.to_i}"
             Process.wait
           else
@@ -147,7 +147,7 @@ module Resque
         else
           break if interval.zero?
           log! "Sleeping for #{interval} seconds"
-          procline @paused ? "Paused" : "Waiting for #{@queues.join(',')}"
+          procline paused? ? "Paused" : "Waiting for #{@queues.join(',')}"
           sleep interval
         end
       end
@@ -309,6 +309,11 @@ module Resque
       end
     end
 
+    # are we paused?
+    def paused?
+      @paused
+    end
+
     # Stop processing jobs after the current one has completed (if we're
     # currently running one).
     def pause_processing
@@ -387,7 +392,7 @@ module Resque
       job.worker = self
       data = encode \
         :queue   => job.queue,
-        :run_at  => Time.now.to_s,
+        :run_at  => Time.now.strftime("%Y/%m/%d %H:%M:%S %Z"),
         :payload => job.payload
       redis.set("worker:#{self}", data)
     end
@@ -479,12 +484,38 @@ module Resque
       @pid ||= to_s.split(":")[1].to_i
     end
 
-    # Returns an array of string pids of all the other workers on this
+    # Returns an Array of string pids of all the other workers on this
     # machine. Useful when pruning dead workers on startup.
     def worker_pids
+      if RUBY_PLATFORM =~ /solaris/
+        solaris_worker_pids
+      else
+        linux_worker_pids
+      end
+    end
+
+    # Find Resque worker pids on Linux and OS X.
+    #
+    # Returns an Array of string pids of all the other workers on this
+    # machine. Useful when pruning dead workers on startup.
+    def linux_worker_pids
       `ps -A -o pid,command | grep [r]esque | grep -v "resque-web"`.split("\n").map do |line|
         line.split(' ')[0]
       end
+    end
+
+    # Find Resque worker pids on Solaris.
+    #
+    # Returns an Array of string pids of all the other workers on this
+    # machine. Useful when pruning dead workers on startup.
+    def solaris_worker_pids
+      `ps -A -o pid,comm | grep ruby | grep -v grep | grep -v "resque-web"`.split("\n").map do |line|
+        real_pid = line.split(' ')[0]
+        pargs_command = `pargs -a #{real_pid} 2>/dev/null | grep [r]esque | grep -v "resque-web"`
+        if pargs_command.split(':')[1] == " resque-#{Resque::Version}"
+          real_pid
+        end
+      end.compact
     end
 
     # Given a string, sets the procline ($0) and logs.

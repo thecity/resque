@@ -1,11 +1,5 @@
 require 'redis/namespace'
 
-begin
-  require 'yajl'
-rescue LoadError
-  require 'json'
-end
-
 require 'resque/version'
 
 require 'resque/errors'
@@ -27,14 +21,15 @@ module Resque
   extend self
 
   # Accepts:
-  #   1. A 'hostname:port' string
-  #   2. A 'hostname:port:db' string (to select the Redis db)
-  #   3. A 'hostname:port/namespace' string (to set the Redis namespace)
-  #   4. A redis URL string 'redis://host:port'
+  #   1. A 'hostname:port' String
+  #   2. A 'hostname:port:db' String (to select the Redis db)
+  #   3. A 'hostname:port/namespace' String (to set the Redis namespace)
+  #   4. A Redis URL String 'redis://host:port'
   #   5. An instance of `Redis`, `Redis::Client`, `Redis::DistRedis`,
   #      or `Redis::Namespace`.
   def redis=(server)
-    if server.respond_to? :split
+    case server
+    when String
       if server =~ /redis\:\/\//
         redis = Redis.connect(:url => server, :thread_safe => true)
       else
@@ -46,8 +41,8 @@ module Resque
       namespace ||= :resque
 
       @redis = Redis::Namespace.new(namespace, :redis => redis)
-    elsif server.respond_to? :namespace=
-        @redis = server
+    when Redis::Namespace
+      @redis = server
     else
       @redis = Redis::Namespace.new(:resque, :redis => server)
     end
@@ -65,6 +60,8 @@ module Resque
     # support 1.x versions of redis-rb
     if redis.respond_to?(:server)
       redis.server
+    elsif redis.respond_to?(:nodes) # distributed
+      redis.nodes.map { |n| n.id }.join(', ')
     else
       redis.client.id
     end
@@ -139,6 +136,19 @@ module Resque
 
   # Pushes a job onto a queue. Queue name should be a string and the
   # item should be any JSON-able Ruby object.
+  #
+  # Resque works generally expect the `item` to be a hash with the following
+  # keys:
+  #
+  #   class - The String name of the job to run.
+  #    args - An Array of arguments to pass the job. Usually passed
+  #           via `class.to_class.perform(*args)`.
+  #
+  # Example
+  #
+  #   Resque.push('archive', :class => 'Archive', :args => [ 35, 'tar' ])
+  #
+  # Returns nothing
   def push(queue, item)
     watch_queue(queue)
     redis.rpush "queue:#{queue}", encode(item)
@@ -217,6 +227,12 @@ module Resque
   #
   # This method is considered part of the `stable` API.
   def enqueue(klass, *args)
+    # Perform before_enqueue hooks. Don't perform enqueue if any hook returns false
+    before_hooks = Plugin.before_enqueue_hooks(klass).collect do |hook|
+      klass.send(hook, *args)
+    end
+    return if before_hooks.any? { |result| result == false }
+
     Job.create(queue_from_class(klass), klass, *args)
 
     Plugin.after_enqueue_hooks(klass).each do |hook|
@@ -341,3 +357,4 @@ module Resque
     end
   end
 end
+
