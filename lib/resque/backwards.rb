@@ -37,7 +37,7 @@ module Resque
       include NewRelic::Agent::Instrumentation::ControllerInstrumentation
       
       # In Resque, classes that do jobs have to have a #perform method for them to do.
-      # The inclusion in config/initializers/resque.rb of this file in Module and Object
+      # The inclusion in init.rb of this file in Module and Object
       # defines a #perform for everything that understands an ID, method, and args to execute
       # during Resque::Job#perform
       def perform(*args)

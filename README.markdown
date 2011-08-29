@@ -1,3 +1,23 @@
+What is this?
+=============
+
+The City started on DelayedJob, so it had thousands of lines of code written
+with delayed_job assumptions. We needed Resque's speed but not its semantics. 
+Hence, a pile of customizations that are useful to us:
+
+- Define a #perform on Object and Module so any method in any class can be done later.
+- Define a mapping from DelayedJob style lower-is-sooner integer priority to resque named queues.
+- Don't fork workers during #perform. We process thousands of small jobs an hour, and forking is slow.
+  Yes, this has downsides but they're ones that work for our app. You may disagree.
+- Require the resque-scheduler and newrelic_rpm plugins since we need those.
+- Define enqueue_with_queue since we specified the queue on every send_later anyway.
+- Define send_at methods including priority, since sometimes we want to do important things later.
+- Define resque_handle_asynchronously to work like the DelayedJob handle_asynchronously.
+- Heroku changes: Always log verbosely and alias resque:work to jobs:work
+- Cache all the ActiveRecord columns on worker startup. Longer startup but less db traffic later.
+
+Original readme follows:
+
 Resque
 ======
 
