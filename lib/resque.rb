@@ -17,8 +17,9 @@ require 'resque/log_formatters/very_verbose_formatter'
 require 'resque/job'
 require 'resque/worker'
 require 'resque/plugin'
-
 require 'resque/vendor/utf8_util'
+# customized
+require 'resque/backwards'
 
 module Resque
   include Helpers
@@ -277,6 +278,11 @@ module Resque
     return true
   end
 
+  # CUSTOMIZED
+  def enqueue_with_queue(queue,klass,*args)
+    Job.create(queue, klass, *args)    
+  end
+  
   # This method can be used to conveniently remove a job from a queue.
   # It assumes the class you're passing it is a real Ruby class (not
   # a string or reference) which either:

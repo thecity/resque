@@ -22,6 +22,17 @@ module Resque
 
     attr_writer :to_s
 
+    # customized, from DelayedJob
+    def self.work_off(num = 100)
+      worker = Resque::Worker.new('*')
+      num.times do
+        #worker.work(0)
+        j = worker.reserve
+        worker.process(j)
+      end
+      return true
+    end
+
     # Returns an array of all worker objects.
     def self.all
       Array(redis.smembers(:workers)).map { |id| find(id) }.compact

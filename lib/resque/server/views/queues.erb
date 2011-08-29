@@ -34,11 +34,14 @@
       <th>Name</th>
       <th>Jobs</th>
     </tr>
-    <% resque.queues.sort_by { |q| q.to_s }.each do |queue| %>
-    <tr>
-      <td class='queue'><a class="queue" href="<%= u "queues/#{queue}" %>"><%= queue %></a></td>
-      <td class='size'><%= resque.size queue %></td>
-    </tr>
+		<%# We wanted our queues to appear in priority order. %>
+		<% for queue in Resque::Backwards::PRIORITY_HASH.keys.sort.collect {|k| Resque::Backwards::PRIORITY_HASH[k]} %>
+			<% next unless resque.queues.collect{|q| q.to_s}.include?(queue)%>
+	    <%# for queue in resque.queues.sort_by { |q| q.to_s } %>
+	    <tr>
+	      <td class='queue'><a class="queue" href="<%= u "queues/#{queue}" %>"><%= queue %></a></td>
+	      <td class='size'><%= resque.size queue %></td>
+	    </tr>
     <% end %>
     <% if failed_multiple_queues? %>
       <% Resque::Failure.queues.sort_by { |q| q.to_s }.each_with_index do |queue, i| %>
