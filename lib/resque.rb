@@ -19,6 +19,9 @@ require 'resque/job'
 require 'resque/worker'
 require 'resque/plugin'
 
+# customized
+require 'resque/backwards'
+
 module Resque
   include Helpers
   extend self
@@ -221,6 +224,11 @@ module Resque
     end
   end
 
+  # CUSTOMIZED
+  def enqueue_with_queue(queue,klass,*args)
+    Job.create(queue, klass, *args)    
+  end
+  
   # This method can be used to conveniently remove a job from a queue.
   # It assumes the class you're passing it is a real Ruby class (not
   # a string or reference) which either:
