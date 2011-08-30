@@ -6,6 +6,9 @@ require 'resque/errors'
 
 require 'resque/failure'
 require 'resque/failure/base'
+require 'resque/failure/multiple'
+require 'resque/failure/redis'
+require 'resque/failure/airbrake'
 
 require 'resque/helpers'
 require 'resque/stat'
