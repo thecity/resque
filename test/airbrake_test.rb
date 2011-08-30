@@ -1,14 +1,12 @@
-
 require 'test_helper'
 
 begin
-  require 'airbrake'
+  require 'airbrake_notifier'
 rescue LoadError
   warn "Install airbrake gem to run Airbrake tests."
 end
 
-if defined? Airbrake
-  require 'resque/failure/airbrake'
+if defined? AirbrakeNotifier
   context "Airbrake" do
     test "should be notified of an error" do
       exception = StandardError.new("BOOM")
