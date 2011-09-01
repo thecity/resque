@@ -25,7 +25,7 @@ module Resque
     class Airbrake < Base
       def self.configure(&block)
         Resque::Failure.backend = self
-        Airbrake.configure(&block)
+        ::Airbrake.configure(&block)
       end
 
       def self.count
@@ -35,7 +35,7 @@ module Resque
       end
 
       def save
-        Airbrake.notify_or_ignore(exception,
+        ::Airbrake.notify_or_ignore(exception,
           :parameters => {
             :payload_class => payload['class'].to_s,
             :payload_args => payload['args'].inspect
