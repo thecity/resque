@@ -6,8 +6,9 @@ rescue LoadError
   warn "Install airbrake gem to run Airbrake tests."
 end
 
-if defined? AirbrakeNotifier
-  context "Airbrake" do
+if defined? Airbrake
+  require 'resque/failure/airbrake'
+  context "Airbrake" do  
     test "should be notified of an error" do
       exception = StandardError.new("BOOM")
       worker = Resque::Worker.new(:test)
