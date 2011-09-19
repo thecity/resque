@@ -8,8 +8,7 @@ require 'resque/failure/thoughtbot'
 
 module Resque
   module Failure
- 
-    class Hoptoad < Base
+    class Airbrake < Base
       include Resque::Failure::Thoughtbot
 
       @klass = ::Airbrake
