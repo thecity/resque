@@ -15,6 +15,22 @@ Hence, a pile of customizations that are useful to us:
 - Define resque_handle_asynchronously to work like the DelayedJob handle_asynchronously.
 - Heroku changes: Always log verbosely and alias resque:work to jobs:work
 - Cache all the ActiveRecord columns on worker startup. Longer startup but less db traffic later.
+ 
+Add the following to an initializer to get d_j style send_later/send_at methods on Object and Module:
+
+    # Make resque workers start the NewRelic agent
+    Resque.before_first_fork do
+      NewRelic::Agent.manual_start(:dispatcher => :resque)
+    end
+    # For completeness - workers still don't fork.
+    Resque.after_fork do
+      NewRelic::Agent.after_fork(:force_reconnect => false)
+    end
+
+    # Make any class a Resque job with exponential backoff
+    Object.send(:include, Resque::Backwards)   
+    Module.send(:include, Resque::Backwards::ClassMethods)
+    Module.send(:include, Resque::Plugins::ExponentialBackoff)
 
 Original readme follows:
 
