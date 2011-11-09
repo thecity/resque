@@ -13,9 +13,9 @@ namespace :resque do
     begin
       worker = Resque::Worker.new(*queues)
 
+      worker.verbose      = true
+
       # CUSTOMIZED
-      # worker.verbose = ENV['LOGGING'] || ENV['VERBOSE']
-      worker.verbose = true
       worker.cant_fork = true
 
       if ENV['VVERBOSE']
