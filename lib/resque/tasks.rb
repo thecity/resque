@@ -13,12 +13,11 @@ namespace :resque do
     begin
       worker = Resque::Worker.new(*queues)
 
-      # CUSTOMIZED
-      # worker.verbose = ENV['LOGGING'] || ENV['VERBOSE']
-      worker.verbose = true
-      worker.cant_fork = true
-      
+      worker.verbose      = ENV['LOGGING'] || ENV['VERBOSE']
       worker.very_verbose = ENV['VVERBOSE']
+            
+      # CUSTOMIZED
+      worker.cant_fork = true
     rescue Resque::NoQueueError
       abort "set QUEUE env var, e.g. $ QUEUE=critical,high rake resque:work"
     end

@@ -361,7 +361,7 @@ module Resque
       return unless hook = Resque.send(name)
       msg = "Running #{name} hook"
       msg << " with #{args.inspect}" if args.any?
-      log msg
+      log! msg
 
       args.any? ? hook.call(*args) : hook.call
     end
