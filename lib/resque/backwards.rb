@@ -12,6 +12,10 @@ module Resque
     def queue
       "low"
     end
+
+    def before_perform_verify_connection
+      ActiveRecord::Base.connection_handler.verify_active_connections!
+    end
     
     def resque_send_later(method, *args)
       Resque.enqueue_with_queue("low",self.class, self.id, method, *args)
@@ -35,6 +39,10 @@ module Resque
     
     module ClassMethods
       include NewRelic::Agent::Instrumentation::ControllerInstrumentation
+
+      def before_perform_verify_connection
+        ActiveRecord::Base.connection_handler.verify_active_connections!
+      end
       
       # In Resque, classes that do jobs have to have a #perform method for them to do.
       # The inclusion in init.rb of this file in Module and Object
