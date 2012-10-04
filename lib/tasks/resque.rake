@@ -5,7 +5,9 @@ task "resque:setup" => :environment do
   # Cache all our database columns on startup so they're handy
   ActiveRecord::Base.send(:subclasses).each { |klass|  klass.columns }
   # Bake in our queue heirarchy
-  ENV['QUEUE'] = Resque::Backwards::PRIORITY_HASH.keys.sort.collect {|k| Resque::Backwards::PRIORITY_HASH[k]}.join(',')
+  if ENV['QUEUE'].blank?
+    ENV['QUEUE'] = Resque::Backwards::PRIORITY_HASH.keys.sort.collect {|k| Resque::Backwards::PRIORITY_HASH[k]}.join(',')
+  end
   STDOUT.sync = STDERR.sync = true
 end
 
