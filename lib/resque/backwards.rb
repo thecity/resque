@@ -6,7 +6,7 @@ module Resque
   
   module Backwards
     
-    PRIORITY_HASH = {-2 => 'control', -1 => 'critical',0 => 'urgent', 1 => 'high',2 => 'medium',3 => 'low',4 => 'slow',5 => 'slowest',6 => 'bulk'}
+    PRIORITY_HASH = {-2 => 'control', -1 => 'critical',0 => 'urgent', 1 => 'high',2 => 'medium',3 => 'low',4 => 'slow',5 => 'slowest',6 => 'bulk',7 => 'bulk2',8 => 'bulk3',9 => 'bulk4',10 => 'bulk5'}
     
     # only for the scheduler
     def queue
