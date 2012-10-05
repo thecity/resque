@@ -12,7 +12,7 @@ module Resque
     def queue
       "low"
     end
-    
+
     def resque_send_later(method, *args)
       Resque.enqueue_with_queue("low",self.class, self.id, method, *args)
     end
@@ -35,12 +35,13 @@ module Resque
     
     module ClassMethods
       include NewRelic::Agent::Instrumentation::ControllerInstrumentation
-      
+
       # In Resque, classes that do jobs have to have a #perform method for them to do.
       # The inclusion in init.rb of this file in Module and Object
       # defines a #perform for everything that understands an ID, method, and args to execute
       # during Resque::Job#perform
       def perform(*args)
+        ActiveRecord::Base.connection_handler.verify_active_connections!
         AllModelObserver.enable_global_view
         id, method = args.shift(2)
         
